@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalDeleteBtn = document.getElementById('modalDeleteBtn');
     const modalCancelBtn = document.getElementById('modalCancelBtn');
     const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+    const langSelect = document.getElementById('langSelect');
 
     let isRecording = false;
     let recognition = null;
@@ -28,6 +29,22 @@ document.addEventListener('DOMContentLoaded', () => {
     let isEditRecording = false;
     let isPausedForEdit = false;
     let mediaStream = null; // Menyimpan stream mic agar izin tidak terus-menerus diminta
+    
+    // Language state
+    let currentLang = 'id-ID';
+    if (langSelect) {
+        currentLang = langSelect.value;
+        langSelect.addEventListener('change', (e) => {
+            currentLang = e.target.value;
+            if (recognition) recognition.lang = currentLang;
+            if (editRecognition) editRecognition.lang = currentLang;
+            
+            if (isRecording) {
+                stopRecording();
+                statusText.textContent = 'Bahasa diubah. Silakan klik Mulai Bicara lagi.';
+            }
+        });
+    }
 
     // Initialize Web Speech API
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
@@ -36,13 +53,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.lang = 'id-ID';
+        recognition.lang = currentLang;
 
         // Edit Recognition Setup
         editRecognition = new SpeechRecognition();
         editRecognition.continuous = false;
         editRecognition.interimResults = false;
-        editRecognition.lang = 'id-ID';
+        editRecognition.lang = currentLang;
 
         editRecognition.onstart = () => {
             isEditRecording = true;
