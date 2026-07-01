@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let editRecognition = null;
     let isEditRecording = false;
     let isPausedForEdit = false;
+    let mediaStream = null; // Menyimpan stream mic agar izin tidak terus-menerus diminta
 
     // Initialize Web Speech API
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
@@ -143,6 +144,12 @@ document.addEventListener('DOMContentLoaded', () => {
         recognition.stop();
         recordBtn.classList.remove('recording');
         recordBtnText.textContent = 'Mulai Bicara';
+
+        // Hentikan stream mikrofon untuk melepaskan indikator rekaman browser
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(track => track.stop());
+            mediaStream = null;
+        }
     }
 
     function renderText(interim = '') {
@@ -189,10 +196,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isRecording) {
             stopRecording();
         } else {
-            try {
-                recognition.start();
-            } catch (e) {
-                console.error('Gagal memulai perekaman:', e);
+            // Trik untuk mencegah browser meminta izin terus-menerus (terutama di protokol file://)
+            // Kita tahan akses mikrofonnya melalui getUserMedia
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        mediaStream = stream;
+                        try {
+                            recognition.start();
+                        } catch (e) {
+                            console.error('Gagal memulai perekaman:', e);
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Akses mikrofon ditolak:', err);
+                        statusText.textContent = 'Gagal mengakses mikrofon. Pastikan izin diberikan.';
+                    });
+            } else {
+                // Fallback jika getUserMedia tidak didukung
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error('Gagal memulai perekaman:', e);
+                }
             }
         }
     });
