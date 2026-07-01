@@ -9,9 +9,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusText = document.getElementById('statusText');
     const resultContainer = document.querySelector('.result-container');
 
+    // Modal elements
+    const wordModal = document.getElementById('wordModal');
+    const modalSelectedWord = document.getElementById('modalSelectedWord');
+    const modalInput = document.getElementById('modalInput');
+    const modalMicBtn = document.getElementById('modalMicBtn');
+    const modalDeleteBtn = document.getElementById('modalDeleteBtn');
+    const modalCancelBtn = document.getElementById('modalCancelBtn');
+    const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+
     let isRecording = false;
     let recognition = null;
     let finalTranscript = '';
+    
+    // Edit state
+    let activeWordIndex = -1;
+    let editRecognition = null;
+    let isEditRecording = false;
+    let isPausedForEdit = false;
 
     // Initialize Web Speech API
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
@@ -21,6 +36,33 @@ document.addEventListener('DOMContentLoaded', () => {
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = 'id-ID';
+
+        // Edit Recognition Setup
+        editRecognition = new SpeechRecognition();
+        editRecognition.continuous = false;
+        editRecognition.interimResults = false;
+        editRecognition.lang = 'id-ID';
+
+        editRecognition.onstart = () => {
+            isEditRecording = true;
+            modalMicBtn.classList.add('recording');
+            modalInput.placeholder = 'Mendengarkan...';
+        };
+
+        editRecognition.onresult = (event) => {
+            const newWord = event.results[0][0].transcript;
+            modalInput.value = newWord;
+        };
+
+        editRecognition.onerror = (event) => {
+            console.error('Edit recognition error:', event.error);
+            modalInput.placeholder = 'Gagal mendengar. Coba lagi...';
+            stopEditRecording();
+        };
+
+        editRecognition.onend = () => {
+            stopEditRecording();
+        };
 
         recognition.onstart = () => {
             isRecording = true;
@@ -64,6 +106,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         recognition.onend = () => {
+            // Jika dijeda untuk edit, jangan restart rekaman utama
+            if (isPausedForEdit) {
+                statusText.textContent = 'Perekaman dijeda untuk mengedit...';
+                return;
+            }
+
             // Continuous recording may stop automatically in some browsers after silence
             // Restart if user hasn't explicitly stopped it
             if (isRecording) {
@@ -83,6 +131,13 @@ document.addEventListener('DOMContentLoaded', () => {
         recordBtn.style.cursor = 'not-allowed';
     }
 
+    function stopEditRecording() {
+        isEditRecording = false;
+        if (editRecognition) editRecognition.stop();
+        modalMicBtn.classList.remove('recording');
+        modalInput.placeholder = 'Ketik kata pengganti atau ucapkan...';
+    }
+
     function stopRecording() {
         isRecording = false;
         recognition.stop();
@@ -99,11 +154,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const span = document.createElement('span');
             span.className = 'word';
             span.textContent = word + ' ';
-            span.title = 'Klik untuk menghapus kata';
+            span.title = 'Klik untuk edit atau hapus kata';
             span.addEventListener('click', () => {
-                words.splice(index, 1);
-                finalTranscript = words.join(' ') + (words.length > 0 ? ' ' : '');
-                renderText();
+                openModal(index, word);
             });
             resultText.appendChild(span);
         });
@@ -183,4 +236,100 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- Modal Logic ---
+
+    function openModal(index, word) {
+        activeWordIndex = index;
+        modalSelectedWord.textContent = word;
+        modalInput.value = word;
+        wordModal.classList.add('show');
+        modalInput.focus();
+        
+        if (isRecording) {
+            isPausedForEdit = true;
+            recognition.stop();
+        }
+    }
+
+    function closeModal() {
+        wordModal.classList.remove('show');
+        activeWordIndex = -1;
+        modalInput.value = '';
+        
+        if (isEditRecording) {
+            stopEditRecording();
+        }
+
+        if (isPausedForEdit) {
+            isPausedForEdit = false;
+            if (isRecording) {
+                try {
+                    recognition.start();
+                    statusText.textContent = 'Mendengarkan... (Berbicara sekarang)';
+                } catch (e) {
+                    console.error('Failed to resume main recording:', e);
+                }
+            }
+        }
+    }
+
+    function confirmEdit() {
+        if (activeWordIndex > -1) {
+            const newWord = modalInput.value.trim();
+            const words = finalTranscript.trim().split(/\s+/).filter(w => w.length > 0);
+            
+            if (newWord) {
+                words[activeWordIndex] = newWord;
+            } else {
+                words.splice(activeWordIndex, 1); // delete if empty
+            }
+            
+            finalTranscript = words.join(' ') + (words.length > 0 ? ' ' : '');
+            renderText();
+        }
+        closeModal();
+    }
+
+    modalMicBtn.addEventListener('click', () => {
+        if (!editRecognition) return;
+        
+        if (isEditRecording) {
+            stopEditRecording();
+        } else {
+            modalInput.value = '';
+            try {
+                editRecognition.start();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    });
+
+    modalDeleteBtn.addEventListener('click', () => {
+        if (activeWordIndex > -1) {
+            const words = finalTranscript.trim().split(/\s+/).filter(w => w.length > 0);
+            words.splice(activeWordIndex, 1);
+            finalTranscript = words.join(' ') + (words.length > 0 ? ' ' : '');
+            renderText();
+        }
+        closeModal();
+    });
+
+    modalConfirmBtn.addEventListener('click', confirmEdit);
+    
+    modalInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            confirmEdit();
+        }
+    });
+
+    modalCancelBtn.addEventListener('click', closeModal);
+
+    // Close modal on backdrop click
+    wordModal.addEventListener('click', (e) => {
+        if (e.target === wordModal) {
+            closeModal();
+        }
+    });
 });
