@@ -2,6 +2,8 @@
 
 Aplikasi web sederhana untuk mengubah suara menjadi teks (transkripsi) secara otomatis dan *real-time* menggunakan **Web Speech API** bawaan dari browser, dibangun murni menggunakan HTML, CSS (Vanilla), dan JavaScript (Vanilla).
 
+![Screenshot Aplikasi](assets/screenshot.webp)
+
 ## Daftar Fitur
 
 Aplikasi ini dilengkapi dengan berbagai fungsionalitas cerdas dan antarmuka premium:
