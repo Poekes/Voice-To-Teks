@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyBtn = document.getElementById('copyBtn');
     const copyText = document.getElementById('copyText');
     const clearBtn = document.getElementById('clearBtn');
+    const undoBtn = document.getElementById('undoBtn');
     const resultText = document.getElementById('resultText');
     const statusText = document.getElementById('statusText');
     const resultContainer = document.querySelector('.result-container');
@@ -30,25 +31,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         recognition.onresult = (event) => {
             let interimTranscript = '';
+            let newFinal = '';
 
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript + ' ';
+                    newFinal += event.results[i][0].transcript + ' ';
                 } else {
                     interimTranscript += event.results[i][0].transcript;
                 }
             }
 
-            resultText.textContent = finalTranscript + interimTranscript;
-            
-            // Auto scroll to bottom
-            resultContainer.scrollTop = resultContainer.scrollHeight;
-
-            // Show buttons if there is text
-            if (finalTranscript.trim().length > 0 || interimTranscript.trim().length > 0) {
-                copyBtn.style.display = 'flex';
-                clearBtn.style.display = 'flex';
+            if (newFinal) {
+                finalTranscript += newFinal;
             }
+
+            renderText(interimTranscript);
         };
 
         recognition.onerror = (event) => {
@@ -93,6 +90,46 @@ document.addEventListener('DOMContentLoaded', () => {
         recordBtnText.textContent = 'Mulai Bicara';
     }
 
+    function renderText(interim = '') {
+        resultText.innerHTML = '';
+        
+        const words = finalTranscript.trim().split(/\s+/).filter(w => w.length > 0);
+        
+        words.forEach((word, index) => {
+            const span = document.createElement('span');
+            span.className = 'word';
+            span.textContent = word + ' ';
+            span.title = 'Klik untuk menghapus kata';
+            span.addEventListener('click', () => {
+                words.splice(index, 1);
+                finalTranscript = words.join(' ') + (words.length > 0 ? ' ' : '');
+                renderText();
+            });
+            resultText.appendChild(span);
+        });
+
+        if (interim) {
+            const interimSpan = document.createElement('span');
+            interimSpan.className = 'interim';
+            interimSpan.textContent = interim;
+            resultText.appendChild(interimSpan);
+        }
+
+        // Auto scroll to bottom
+        resultContainer.scrollTop = resultContainer.scrollHeight;
+
+        // Show buttons if there is text
+        if (words.length > 0 || interim.trim().length > 0) {
+            copyBtn.style.display = 'flex';
+            clearBtn.style.display = 'flex';
+            if (undoBtn) undoBtn.style.display = 'flex';
+        } else {
+            copyBtn.style.display = 'none';
+            clearBtn.style.display = 'none';
+            if (undoBtn) undoBtn.style.display = 'none';
+        }
+    }
+
     recordBtn.addEventListener('click', () => {
         if (!recognition) return;
 
@@ -128,9 +165,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     clearBtn.addEventListener('click', () => {
         finalTranscript = '';
-        resultText.textContent = '';
+        resultText.innerHTML = '';
         copyBtn.style.display = 'none';
         clearBtn.style.display = 'none';
+        if (undoBtn) undoBtn.style.display = 'none';
         statusText.textContent = 'Teks berhasil dihapus.';
     });
+
+    if (undoBtn) {
+        undoBtn.addEventListener('click', () => {
+            const words = finalTranscript.trim().split(/\s+/).filter(w => w.length > 0);
+            if (words.length > 0) {
+                words.pop(); // Remove last word
+                finalTranscript = words.join(' ') + (words.length > 0 ? ' ' : '');
+                renderText();
+                statusText.textContent = 'Kata terakhir dihapus.';
+            }
+        });
+    }
 });
