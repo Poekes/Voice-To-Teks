@@ -150,14 +150,126 @@
         }
 
         .word:hover {
-            background-color: var(--danger);
-            color: white;
-            text-decoration: line-through;
+            background-color: rgba(79, 70, 229, 0.3);
+            color: #A78BFA;
         }
 
         .interim {
             color: var(--text-muted);
             font-style: italic;
+        }
+
+        /* Modal Styles */
+        .modal-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-backdrop.show {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-title {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: var(--text-main);
+        }
+
+        .modal-subtitle {
+            margin: 0 0 20px 0;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .modal-edit-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .modal-edit-section input {
+            flex: 1;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .modal-edit-section input:focus {
+            border-color: var(--primary);
+        }
+
+        .icon-btn {
+            background-color: var(--border);
+            padding: 10px;
+            border-radius: 8px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            background-color: #475569;
+        }
+
+        .icon-btn.recording {
+            background-color: var(--danger);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-actions-right {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-danger { background-color: var(--danger); color: white; padding: 10px 16px; font-size: 14px; }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+        .btn-secondary { background-color: transparent; border: 1px solid var(--border); color: var(--text-main); padding: 10px 16px; font-size: 14px; }
+        .btn-secondary:hover { background-color: var(--border); }
+        .btn-primary { background-color: var(--primary); color: white; padding: 10px 16px; font-size: 14px; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .result-container {
@@ -264,6 +376,34 @@
             <div id="resultText"></div>
         </div>
         <div class="status" id="statusText">Sistem siap.</div>
+    </div>
+
+    <!-- Modal Edit/Hapus Kata -->
+    <div id="wordModal" class="modal-backdrop">
+        <div class="modal">
+            <h3 class="modal-title">Edit atau Hapus Kata</h3>
+            <p class="modal-subtitle">Kata terpilih: <strong id="modalSelectedWord"></strong></p>
+            
+            <div class="modal-edit-section">
+                <input type="text" id="modalInput" placeholder="Ketik kata pengganti atau ucapkan...">
+                <button id="modalMicBtn" class="icon-btn" title="Rekam Suara">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="modal-actions">
+                <button id="modalDeleteBtn" class="btn-danger">Hapus</button>
+                <div class="modal-actions-right">
+                    <button id="modalCancelBtn" class="btn-secondary">Batal</button>
+                    <button id="modalConfirmBtn" class="btn-primary">Konfirmasi</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
