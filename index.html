@@ -129,6 +129,37 @@
             transform: translateY(-2px);
         }
 
+        #undoBtn {
+            background-color: #8B5CF6;
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(139, 92, 246, 0.39);
+            display: none;
+        }
+
+        #undoBtn:hover {
+            background-color: #7C3AED;
+            transform: translateY(-2px);
+        }
+
+        .word {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-block;
+            padding: 0 2px;
+            border-radius: 4px;
+        }
+
+        .word:hover {
+            background-color: var(--danger);
+            color: white;
+            text-decoration: line-through;
+        }
+
+        .interim {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
         .result-container {
             background-color: #0B1120;
             border-radius: 12px;
@@ -219,6 +250,13 @@
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                 </svg>
                 <span>Hapus Teks</span>
+            </button>
+            <button id="undoBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 7v6h6"></path>
+                    <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+                </svg>
+                <span>Hapus Kata Terakhir</span>
             </button>
         </div>
 
